@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
-
 import br.com.sistema.exceptions.DadosInvalidosException;
 import br.com.sistema.exceptions.UsuarioNaoEncontradoException;
 import br.com.sistema.repository.UsuarioRepository;

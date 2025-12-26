@@ -1,15 +1,12 @@
 package br.com.sistema.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-
-import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
-
 import br.com.sistema.model.enums.Genero;
 import br.com.sistema.model.enums.TipoPessoa;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -18,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
@@ -32,7 +30,6 @@ public class Cliente {
 	@Column(name = "nome")
 	private String nome;
 
-	@Convert(converter = Jsr310JpaConverters.LocalDateConverter.class)
 	@Column(name = "data_nascimento")
 	private LocalDate dataNascimento;
 
@@ -50,11 +47,11 @@ public class Cliente {
 	@Column(name = "genero")
 	private Genero genero;
 
-	@OneToMany(cascade = CascadeType.ALL)
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	@JoinColumn(name = "id_cliente")
 	private List<Endereco> enderecos;
 
-	@OneToMany(cascade = CascadeType.ALL)
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	@JoinColumn(name = "id_cliente")
 	private List<Contato> contatos;
 
@@ -64,10 +61,19 @@ public class Cliente {
 	@Column(name = "senha")
 	private String senha;
 
+	@Column(name = "data_cadastro", nullable = false)
+    private LocalDateTime dataCadastro;
+	
 	
 	public Cliente() {
 		// TODO Auto-generated constructor stub
 	}
+	
+	
+	@PrePersist
+    protected void onCreate() {
+        dataCadastro = LocalDateTime.now();
+    }
 
 
 	public Long getId() {
@@ -156,6 +162,16 @@ public class Cliente {
 
 	public void setSenha(String senha) {
 		this.senha = senha;
+	}
+
+
+	public LocalDateTime getDataCadastro() {
+		return dataCadastro;
+	}
+
+
+	public void setDataCadastro(LocalDateTime dataCadastro) {
+		this.dataCadastro = dataCadastro;
 	}
 
 }

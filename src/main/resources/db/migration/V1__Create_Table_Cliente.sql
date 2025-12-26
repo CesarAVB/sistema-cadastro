@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS `cliente` (
 `genero` enum('FEMININO','MASCULINO') DEFAULT NULL,
 `login` varchar(50) DEFAULT NULL,
 `senha` varchar(50) DEFAULT NULL,
+`data_cadastro` datetime(6) NOT NULL,
 PRIMARY KEY (`id`)
 );

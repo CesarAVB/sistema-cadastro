@@ -1,79 +1,109 @@
 package br.com.sistema.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
+import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-
 import br.com.sistema.dto.ClienteRequestDTO;
 import br.com.sistema.dto.ClienteResponseDTO;
+import br.com.sistema.dto.MetricaDashboard;
 import br.com.sistema.exceptions.DadosInvalidosException;
 import br.com.sistema.model.Cliente;
 import br.com.sistema.repository.ClienteRepository;
 
 @Service
-//@Transactional //Se ocorrer uma exceção não verificada (ou seja, uma RuntimeException), o Spring fará o rollback automaticamente
 public class ClienteService {
-
-	private ClienteRepository clienteRepository;
+    private ClienteRepository clienteRepository;
     private ModelMapper modelMapper;
-    
-	public ClienteService(ClienteRepository clienteRepository, ModelMapper modelMapper) {
-		this.clienteRepository = clienteRepository;
-		this.modelMapper = modelMapper;
-	}
 
-	
-	public ClienteResponseDTO save(ClienteRequestDTO clienteRequestDTO) {
-		
-		// Antes de salvar, verifica se o CPF/CNPJ passado existe no BD
-		Optional<Cliente> clienteRetornado = clienteRepository.findByCpfCnpj(clienteRequestDTO.getCpfCnpj());
-		
-		// Se o CPF/CNPJ já existir no BD, lanca uma Excecao personalizada
-		if (clienteRetornado.isPresent()) {
-			throw new DadosInvalidosException("CPF/CNPJ já cadastrado no  sistema.");
-		}
-		
-		// Se o CPF/CNPJ não existir no BD, executa as linhas abaixo
-		// Cria um objeto Cliente
-		var entity = convertToEntity(clienteRequestDTO);
+    public ClienteService(ClienteRepository clienteRepository, ModelMapper modelMapper) {
+        this.clienteRepository = clienteRepository;
+        this.modelMapper = modelMapper;
+    }
 
-		try {
-			// Salva o cliente e converte o objeto retornado no método save em um ClienteResponseDTO 
-			// Retorna o objeto ClienteResponseDTO para a ClienteController para ser exibida com um ResponseEntity
-			var responseDTO = convertToDto( clienteRepository.save(entity) );
-			return responseDTO;
-			
-		} catch (Exception e) {
-			// Trata exceções de banco de dados e encapsula a exceção original
-			// Captura e lança uma exceção personalizada para ser tratada mais acima
-			throw new RuntimeException("Erro ao salvar o usuário no banco de dados", e);
-		}
-	}
-	
-	
-	public List<Cliente> listarTodos() {
-		return clienteRepository.findAll();
-	}
+    public ClienteResponseDTO save(ClienteRequestDTO clienteRequestDTO) {
+        Optional<Cliente> clienteRetornado = clienteRepository.findByCpfCnpj(clienteRequestDTO.getCpfCnpj());
 
-	
-	public Optional<Cliente> buscarPorId(Long id) {
-		return clienteRepository.findById(id);
-	}
+        if (clienteRetornado.isPresent()) {
+            throw new DadosInvalidosException("CPF/CNPJ já cadastrado no sistema.");
+        }
 
-	
-	public void remover(Long id) {
-		clienteRepository.deleteById(id);
-	}
-	
-	
-	// ModelMapper - Converte uma entidade Cliente em um ResponseDTO para ser usado como Response para o Front 
-	public ClienteResponseDTO convertToDto(Cliente cliente) {
+        var entity = convertToEntity(clienteRequestDTO);
+
+        try {
+            var responseDTO = convertToDto(clienteRepository.save(entity));
+            return responseDTO;
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao salvar o cliente no banco de dados", e);
+        }
+    }
+
+    public ClienteResponseDTO atualizar(Long id, ClienteRequestDTO clienteRequestDTO) {
+        Optional<Cliente> clienteExistente = clienteRepository.findById(id);
+
+        if (clienteExistente.isEmpty()) {
+            throw new DadosInvalidosException("Cliente não encontrado.");
+        }
+
+        Optional<Cliente> clienteComMesmoCpfCnpj = clienteRepository.findByCpfCnpj(clienteRequestDTO.getCpfCnpj());
+        if (clienteComMesmoCpfCnpj.isPresent() && !clienteComMesmoCpfCnpj.get().getId().equals(id)) {
+            throw new DadosInvalidosException("CPF/CNPJ já cadastrado em outro cliente.");
+        }
+
+        var entity = convertToEntity(clienteRequestDTO);
+        entity.setId(id);
+
+        try {
+            var responseDTO = convertToDto(clienteRepository.save(entity));
+            return responseDTO;
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao atualizar o cliente no banco de dados", e);
+        }
+    }
+
+    public List<Cliente> listarTodos() {
+        return clienteRepository.findAll();
+    }
+
+    public Optional<Cliente> buscarPorId(Long id) {
+        return clienteRepository.findById(id);
+    }
+
+    public void remover(Long id) {
+        Optional<Cliente> cliente = clienteRepository.findById(id);
+        if (cliente.isEmpty()) {
+            throw new DadosInvalidosException("Cliente não encontrado.");
+        }
+        clienteRepository.deleteById(id);
+    }
+
+    public MetricaDashboard calcularMetricas() {
+        Long totalClientes = clienteRepository.count();
+        LocalDate hoje = LocalDate.now();
+        LocalDateTime inicioDoDiaHoje = hoje.atStartOfDay();
+        Long novosHoje = clienteRepository.countByDataCadastro(inicioDoDiaHoje); 
+        Double mediaDiaria = totalClientes / 30.0;
+        Long clientesAtivos = totalClientes / 2;
+        Double variacao = 2.5;
+        Double percentualAtivos = totalClientes > 0 ? (clientesAtivos * 100.0) / totalClientes : 0.0;
+
+        return new MetricaDashboard(totalClientes, variacao, novosHoje, mediaDiaria, clientesAtivos, percentualAtivos);
+    }
+
+    // Usa findTop10ByOrderByIdDesc
+    public List<Cliente> obterRecentes(int limite) {
+        List<Cliente> clientes = clienteRepository.findTop10ByOrderByIdDesc();
+
+        return clientes.stream().limit(limite).collect(Collectors.toList());
+    }
+
+    public ClienteResponseDTO convertToDto(Cliente cliente) {
         return modelMapper.map(cliente, ClienteResponseDTO.class);
     }
 
-	// ModelMapper - 
     public Cliente convertToEntity(ClienteRequestDTO clienteRequestDTO) {
         return modelMapper.map(clienteRequestDTO, Cliente.class);
     }
