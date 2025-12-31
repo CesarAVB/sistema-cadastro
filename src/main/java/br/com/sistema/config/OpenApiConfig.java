@@ -26,7 +26,7 @@ public class OpenApiConfig {
                         .contact(new Contact()
                                 .name("César Augusto")
                                 .email("cesar.augusto.rj1@gmail.com")
-                                .url("https://quemsoueu-six.vercel.app/"))
+                                .url("https://portfolio.cesaravb.com.br/"))
                         .license(new License()
                                 .name("MIT License")
                                 .url("https://opensource.org/licenses/MIT")))
@@ -35,7 +35,7 @@ public class OpenApiConfig {
                                 .url("http://localhost:8080")
                                 .description("Servidor de Desenvolvimento"),
                         new Server()
-                                .url("https://api.sistema.com.br")
+                                .url("https://api-receitas.cesaravb.com.br/")
                                 .description("Servidor de Produção")
                 ));
     }
