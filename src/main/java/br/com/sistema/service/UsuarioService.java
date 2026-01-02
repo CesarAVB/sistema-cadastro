@@ -1,11 +1,14 @@
 package br.com.sistema.service;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import br.com.sistema.exceptions.DadosInvalidosException;
 import br.com.sistema.model.Usuario;
 import br.com.sistema.repository.UsuarioRepository;
 
@@ -44,6 +47,25 @@ public class UsuarioService implements UserDetailsService { // Classe que implem
     public boolean existsByUsernameOrEmail(String username, String email) {
         return usuarioRepository.existsByUsernameIgnoreCase(username) ||
                usuarioRepository.existsByEmailIgnoreCase(email);
+    }
+    
+    
+    public List<Usuario> listarTodos() {
+        return usuarioRepository.findAll();
+    }
+
+    
+    public Optional<Usuario> buscarPorId(Long id) {
+        return usuarioRepository.findById(id);
+    }
+    
+    
+    public void remover(Long id) {
+        Optional<Usuario> usuario = usuarioRepository.findById(id);
+        if (usuario.isEmpty()) {
+            throw new DadosInvalidosException("Usuário não encontrado.");
+        }
+        usuarioRepository.deleteById(id);
     }
 
 }

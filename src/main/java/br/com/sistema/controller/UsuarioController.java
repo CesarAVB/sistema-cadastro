@@ -1,18 +1,27 @@
 package br.com.sistema.controller;
 
+import java.util.List;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import jakarta.validation.Valid;
 import br.com.sistema.dto.CriarUsuarioDTO;
 import br.com.sistema.model.Usuario;
 import br.com.sistema.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/usuario")
@@ -53,5 +62,42 @@ public class UsuarioController {
             return ResponseEntity.internalServerError()
                 .body("Erro ao criar usuário: " + e.getMessage());
         }
+    }
+    
+    
+    @GetMapping
+    @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista com todos os usuários cadastrados")
+    @ApiResponse(responseCode = "200", description = "Lista de usuários retornada com sucesso")
+    public ResponseEntity<List<Usuario>> listarTodos() {
+        List<Usuario> usuarios = usuarioService.listarTodos();
+        return ResponseEntity.status(HttpStatus.OK).body(usuarios);
+    }
+
+    
+    @GetMapping("/{id}")
+    @Operation(summary = "Buscar usuario por ID", description = "Retorna os dados de um usuário específico")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Usuário encontrado"),
+        @ApiResponse(responseCode = "404", description = "Usuario não encontrado")
+    })
+    public ResponseEntity<Usuario> buscarPorId(
+            @Parameter(description = "ID do Usuario")
+            @PathVariable Long id) {
+        Optional<Usuario> usuario = usuarioService.buscarPorId(id);
+        return usuario.map(ResponseEntity::ok).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Deletar usuário", description = "Remove um usuário do sistema")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Usuário deletado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    })
+    public ResponseEntity<Void> deletar(
+            @Parameter(description = "ID do usuário")
+            @PathVariable Long id) {
+        usuarioService.remover(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
