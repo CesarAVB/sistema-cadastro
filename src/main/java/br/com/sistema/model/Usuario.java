@@ -16,6 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
@@ -41,6 +42,13 @@ public class Usuario implements UserDetails, Serializable {
 
 	@Column(name = "password", nullable = false)
 	private String password;
+	
+	@Lob // Armazena foto como texto base64 (até 2GB)
+    @Column(name = "foto_perfil")
+    private String fotoPerfil;
+
+    @Column(name = "tema", length = 10, nullable = false)
+    private String tema = "light"; // default: light
 
 	@Column(name = "account_non_expired")
 	private Boolean accountNonExpired;
@@ -130,6 +138,22 @@ public class Usuario implements UserDetails, Serializable {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	public String getFotoPerfil() {
+		return fotoPerfil;
+	}
+
+	public void setFotoPerfil(String fotoPerfil) {
+		this.fotoPerfil = fotoPerfil;
+	}
+
+	public String getTema() {
+		return tema;
+	}
+
+	public void setTema(String tema) {
+		this.tema = tema;
 	}
 
 	public Boolean getAccountNonExpired() {

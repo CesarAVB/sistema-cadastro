@@ -8,15 +8,23 @@ import org.springframework.stereotype.Repository;
 import br.com.sistema.model.Usuario;
 
 @Repository
-public interface UsuarioRepository extends JpaRepository<Usuario, Long>{
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
 	Optional<Usuario> findByEmail(String email);
-	
-	@Query("SELECT u FROM Usuario u WHERE u.username =:username")	//JPQL de busca de usuário no BD. OBS.: Desnecessário, Utilizado apenas para estudo.
+
+	@Query("SELECT u FROM Usuario u WHERE u.username =:username") // JPQL de busca de usuário no BD. OBS.: Desnecessário, Utilizado apenas para estudo.
 	Usuario findByUsername(@Param("username") String username);
-	
+
 //	Optional<Usuario> findByUsername(String username);
-	
+
 	Optional<Usuario> findByUsernameOrEmail(String username, String email);
-	
+
+	boolean existsByUsernameIgnoreCase(String username);
+
+	boolean existsByEmailIgnoreCase(String email);
+
+	Optional<Usuario> findByUsernameIgnoreCase(String username);
+
+	Optional<Usuario> findByEmailIgnoreCase(String email);
+
 }
