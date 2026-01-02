@@ -15,7 +15,7 @@ import br.com.sistema.model.Usuario;
 import br.com.sistema.service.UsuarioService;
 
 @RestController
-@RequestMapping("/api/usuarios")
+@RequestMapping("/usuario")
 @Validated
 public class UsuarioController {
 
