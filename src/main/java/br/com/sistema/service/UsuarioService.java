@@ -1,14 +1,20 @@
 package br.com.sistema.service;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import br.com.sistema.dto.UsuarioFotoResponseDTO;
 import br.com.sistema.exceptions.DadosInvalidosException;
+import br.com.sistema.exceptions.UsuarioNaoEncontradoException;
 import br.com.sistema.model.Usuario;
 import br.com.sistema.repository.UsuarioRepository;
 
@@ -36,6 +42,53 @@ public class UsuarioService implements UserDetailsService { // Classe que implem
 	    } else { // Se o usuário não foi encontrado
 	        throw new UsernameNotFoundException("Usuário " + username + " não encontrado"); // Lança uma exceção indicando que o usuário não foi encontrado
 	    }
+	}
+	
+	
+	public UsuarioFotoResponseDTO atualizarFotoPerfil(Long id, MultipartFile foto) {
+	    // Validações
+	    if (foto.isEmpty()) {
+	        throw new DadosInvalidosException("Arquivo não pode estar vazio");
+	    }
+
+	    if (!foto.getContentType().startsWith("image/")) {
+	        throw new DadosInvalidosException("Apenas imagens são permitidas");
+	    }
+
+	    if (foto.getSize() > 5 * 1024 * 1024) { // 5MB
+	        throw new DadosInvalidosException("Foto deve ter no máximo 5MB");
+	    }
+
+	    Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+	    if (usuarioOpt.isEmpty()) {
+	        throw new UsuarioNaoEncontradoException("Usuário não encontrado: " + id);
+	    }
+
+	    Usuario usuario = usuarioOpt.get();
+
+	    // Converte MultipartFile → Base64
+	    try {
+	        String fotoBase64 = "data:" + foto.getContentType() + ";base64," + 
+	                           Base64.getEncoder().encodeToString(foto.getBytes());
+	        usuario.setFotoPerfil(fotoBase64);
+	        usuarioRepository.save(usuario);
+
+	        return new UsuarioFotoResponseDTO(
+	            usuario.getId(), 
+	            usuario.getNome(), 
+	            fotoBase64,
+	            "Foto atualizada com sucesso!"
+	        );
+	    } catch (Exception e) {
+	        throw new RuntimeException("Erro ao processar foto: " + e.getMessage());
+	    }
+	}
+
+	
+	public String obterFotoPerfil(Long id) {
+	    return usuarioRepository.findById(id)
+	        .map(Usuario::getFotoPerfil)
+	        .orElse(null);
 	}
 
 
